@@ -1,0 +1,9 @@
+{
+  "name": "chrif-store",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local backend and static server for the Chrif Store frontend",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

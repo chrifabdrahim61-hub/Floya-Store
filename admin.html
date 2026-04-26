@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Floya Store - لوحة التحكم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root{--primary:#C17B7B;--primary-light:#D9A5A5;--primary-dark:#A06060;--secondary:#D4A574;--accent:#B8926A;--bg:#F0EBE5;--bg-alt:#F3EBE3;--card:#FFFFFF;--text:#2D2A27;--text-light:#6B6560;--text-muted:#A09890;--border:#E8DDD4;--promo:#D94040;--success:#4A9D5B;--warning:#E8A838;--danger:#D94040;--shadow-sm:0 1px 4px rgba(0,0,0,.04);--shadow:0 2px 12px rgba(0,0,0,.06);--shadow-lg:0 8px 30px rgba(0,0,0,.1);--radius:16px;--radius-sm:10px;--radius-xs:6px;--transition:.3s cubic-bezier(.4,0,.2,1)}
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth;font-size:16px}
+        body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+        img{max-width:100%;display:block}button{font-family:'Cairo',sans-serif;cursor:pointer;border:none;outline:none}
+        input,select,textarea{font-family:'Cairo',sans-serif;outline:none}a{text-decoration:none;color:inherit}
+        .container{max-width:1200px;margin:0 auto;padding:0 16px;width:100%}
+        #toast-container{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:90%;max-width:380px}
+        .toast{padding:14px 20px;border-radius:var(--radius-sm);color:#fff;font-weight:600;font-size:14px;box-shadow:var(--shadow-lg);pointer-events:auto;animation:toastIn .4s ease,toastOut .4s ease 2.6s forwards;display:flex;align-items:center;gap:10px}
+        .toast.success{background:var(--success)}.toast.error{background:var(--danger)}.toast.info{background:var(--primary)}
+        @keyframes toastIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateY(-20px)}}
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+        .modal-overlay.active{display:flex}
+        .modal-box{background:var(--card);border-radius:var(--radius);padding:28px;max-width:420px;width:100%;box-shadow:var(--shadow-lg);animation:modalIn .3s ease}
+        @keyframes modalIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+        .modal-box h3{font-size:18px;font-weight:700;margin-bottom:12px}
+        .modal-box p{color:var(--text-light);font-size:14px;margin-bottom:20px}
+        .modal-actions{display:flex;gap:10px}
+        .modal-actions button{padding:10px 24px;border-radius:var(--radius-xs);font-weight:600;font-size:14px;transition:var(--transition)}
+        .btn-confirm-delete{background:var(--danger);color:#fff}.btn-confirm-delete:hover{background:#c03030}
+        .btn-cancel-modal{background:var(--bg-alt);color:var(--text)}.btn-cancel-modal:hover{background:var(--border)}
+
+        .admin-login-wrap{width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,var(--bg) 0%,#E3D8CC 100%)}
+        .login-card{background:var(--card);border-radius:var(--radius);padding:36px 28px;box-shadow:var(--shadow-lg);max-width:400px;width:100%;border:1px solid var(--border)}
+        .login-logo{width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid var(--border);margin:0 auto 16px;display:block}
+        .login-title{text-align:center;font-size:22px;font-weight:800;margin-bottom:4px}
+        .login-sub{text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:28px}
+        .login-form .form-group{margin-bottom:16px}
+        .btn-login{width:100%;padding:13px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-size:15px;font-weight:800;transition:var(--transition);margin-top:8px}
+        .btn-login:hover{box-shadow:0 4px 15px rgba(193,123,123,.35)}
+        .login-error{text-align:center;font-size:12px;color:var(--danger);margin-top:12px;display:none}
+        .login-error.show{display:block}
+
+        .admin-dashboard{display:none;width:100%;min-height:100vh}
+        .admin-dashboard.active{display:block}
+        .admin-header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 0;box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:100}
+        .admin-header-inner{display:flex;align-items:center;justify-content:space-between;gap:12px}
+        .admin-header-title{font-size:18px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px;flex-shrink:0}
+        .admin-header-title img{width:32px;height:32px;border-radius:50%;object-fit:cover}
+        .admin-header-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+        .btn-sm{padding:7px 14px;border-radius:var(--radius-xs);font-size:12px;font-weight:600;transition:var(--transition);display:flex;align-items:center;gap:5px}
+        .btn-ghost{background:var(--bg-alt);color:var(--text-light)}.btn-ghost:hover{background:var(--border)}
+        .btn-logout{background:#FEECEC;color:var(--danger)}.btn-logout:hover{background:var(--danger);color:#fff}
+        .admin-tabs{display:flex;gap:0;background:var(--card);border-bottom:2px solid var(--border);overflow-x:auto;scrollbar-width:none;width:100%}
+        .admin-tabs::-webkit-scrollbar{display:none}
+        .admin-tab{padding:14px 16px;font-size:12px;font-weight:700;color:var(--text-muted);white-space:nowrap;transition:var(--transition);border-bottom:3px solid transparent;background:none;flex-shrink:0}
+        .admin-tab:hover{color:var(--text)}
+        .admin-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+        .admin-content{padding:20px 0;width:100%}
+        .admin-section{display:none;width:100%}
+        .admin-section.active{display:block}
+        .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px;width:100%}
+        @media(min-width:600px){.stats-grid{grid-template-columns:repeat(4,1fr)}}
+        .stat-card{background:var(--card);border-radius:var(--radius-sm);padding:18px 14px;box-shadow:var(--shadow-sm);border:1px solid var(--border);text-align:center}
+        .stat-icon{font-size:26px;margin-bottom:8px}
+        .stat-value{font-size:26px;font-weight:900;color:var(--text)}
+        .stat-label{font-size:11px;color:var(--text-muted);font-weight:600}
+        .admin-products-list{display:flex;flex-direction:column;gap:12px;width:100%}
+        .admin-product-item{display:flex;gap:14px;align-items:center;background:var(--card);border-radius:var(--radius-sm);padding:14px;box-shadow:var(--shadow-sm);border:1px solid var(--border);transition:var(--transition)}
+        .admin-product-item:hover{box-shadow:var(--shadow)}
+        .admin-product-thumb{width:65px;height:65px;border-radius:var(--radius-xs);object-fit:cover;flex-shrink:0;background:var(--bg-alt)}
+        .admin-product-info{flex:1;min-width:0}
+        .admin-product-info h4{font-size:14px;font-weight:700;margin-bottom:4px}
+        .admin-product-meta{font-size:12px;color:var(--text-muted);display:flex;gap:12px;flex-wrap:wrap}
+        .admin-product-meta .meta-promo{color:var(--promo);font-weight:700}
+        .admin-product-actions{display:flex;gap:8px;flex-shrink:0}
+        .btn-edit,.btn-delete{width:36px;height:36px;border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--transition)}
+        .btn-edit{background:#EBF5FF;color:#2B7DE9}.btn-edit:hover{background:#2B7DE9;color:#fff}
+        .btn-delete{background:#FEECEC;color:var(--danger)}.btn-delete:hover{background:var(--danger);color:#fff}
+        .admin-form-card{background:var(--card);border-radius:var(--radius);padding:28px 20px;box-shadow:var(--shadow-sm);border:1px solid var(--border);width:100%;max-width:100%}
+        @media(min-width:640px){.admin-form-card{max-width:600px}}
+        .admin-form-title{font-size:18px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+        .admin-form-title i{color:var(--primary)}
+        .form-group{margin-bottom:18px}
+        .form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:var(--text)}
+        .form-group input,.form-group select{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:14px;color:var(--text);background:var(--bg-alt);transition:var(--transition);-webkit-appearance:none;appearance:none}
+        .form-group select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23999' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 14px center;padding-left:36px}
+        .form-group input:focus,.form-group select:focus{border-color:var(--primary-light);background:var(--card)}
+        .form-group input::placeholder{color:var(--text-muted)}
+        .form-group textarea{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:14px;color:var(--text);background:var(--bg-alt);transition:var(--transition);resize:vertical;min-height:100px;font-family:'Cairo',sans-serif}
+        .form-group textarea:focus{border-color:var(--primary-light);background:var(--card)}
+
+        /* ===== رفع الصور ===== */
+        .image-upload-area{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px 16px;text-align:center;cursor:pointer;transition:var(--transition);background:var(--bg-alt);position:relative;overflow:hidden}
+        .image-upload-area:hover{border-color:var(--primary-light);background:#FAF6F2}
+        .image-upload-area.has-image{padding:8px;border-style:solid;border-color:var(--success)}
+        .image-upload-area input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
+        .image-upload-area .upload-icon{font-size:32px;color:var(--text-muted);margin-bottom:8px}
+        .image-upload-area .upload-text{font-size:13px;color:var(--text-muted);font-weight:600}
+        .image-upload-area .upload-hint{font-size:11px;color:var(--border);margin-top:4px}
+        .image-upload-area .upload-preview{width:100%;max-height:200px;object-fit:contain;border-radius:var(--radius-xs)}
+        .image-upload-area .remove-image{position:absolute;top:8px;left:8px;width:28px;height:28px;border-radius:50%;background:var(--danger);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:3;transition:var(--transition)}
+        .image-upload-area .remove-image:hover{transform:scale(1.1)}
+
+        .form-row{display:flex;gap:14px}
+        @media(max-width:500px){.form-row{flex-direction:column;gap:0}}
+        .form-row .form-group{flex:1}
+        .btn-submit-product{padding:12px 32px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-size:14px;font-weight:700;transition:var(--transition);margin-top:8px}
+        .btn-submit-product:hover{box-shadow:0 4px 15px rgba(193,123,123,.35)}
+        .btn-cancel-edit{padding:12px 24px;border-radius:var(--radius-sm);background:var(--bg-alt);color:var(--text-light);font-size:14px;font-weight:600;transition:var(--transition);margin-top:8px;margin-left:10px}
+        .btn-cancel-edit:hover{background:var(--border)}
+        .orders-list{display:flex;flex-direction:column;gap:12px;width:100%}
+        .order-item{background:var(--card);border-radius:var(--radius-sm);padding:18px;box-shadow:var(--shadow-sm);border:1px solid var(--border);border-right:4px solid var(--primary-light)}
+        .order-item.status-new{border-right-color:var(--warning)}
+        .order-item.status-confirmed{border-right-color:var(--success)}
+        .order-item.status-completed{border-right-color:var(--text-muted)}
+        .order-item.status-cancelled{border-right-color:var(--danger)}
+        .order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+        .order-id{font-size:13px;font-weight:700;color:var(--primary)}
+        .order-date{font-size:11px;color:var(--text-muted)}
+        .order-details{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+        @media(max-width:400px){.order-details{grid-template-columns:1fr}}
+        .order-detail-item{font-size:13px}
+        .order-detail-item span{color:var(--text-muted);font-weight:500}
+        .order-detail-item strong{font-weight:700}
+        .order-detail-item.product-name{grid-column:1/-1}
+        .order-status-select{padding:6px 12px;border-radius:var(--radius-xs);border:1px solid var(--border);font-size:12px;font-weight:600;font-family:'Cairo',sans-serif;background:var(--bg-alt);cursor:pointer}
+
+        /* Settings Section */
+        .settings-card{background:var(--card);border-radius:var(--radius);padding:28px 20px;box-shadow:var(--shadow-sm);border:1px solid var(--border);max-width:500px}
+        .settings-section{margin-bottom:24px}
+        .settings-section:last-child{margin-bottom:0}
+        .settings-section h4{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:8px}
+        .settings-section h4 i{color:var(--primary)}
+        .password-strength{margin-top:8px;font-size:11px}
+        .password-strength.weak{color:var(--danger)}
+        .password-strength.medium{color:var(--warning)}
+        .password-strength.strong{color:var(--success)}
+
+        .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted)}
+        .empty-state i{font-size:48px;margin-bottom:16px;display:block;color:var(--border)}
+        .empty-state p{font-size:15px;font-weight:500}
+        .fade-in{animation:fadeIn .4s ease}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        @media(max-width:480px){.admin-product-item{flex-wrap:wrap}.admin-header-inner{flex-wrap:wrap}.admin-tab{padding:12px 10px;font-size:11px}}
+        @media(min-width:768px){.container{padding:0 24px}}
+        @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+    </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+        <h3><i class="fas fa-exclamation-triangle" style="color:var(--danger);margin-left:8px;"></i> تأكيد الحذف</h3>
+        <p>هل أنت متأكد من حذف هذا المنتج؟ لا يمكن التراجع عن هذا الإجراء.</p>
+        <div class="modal-actions">
+            <button class="btn-confirm-delete" id="confirmDeleteBtn">نعم، احذف</button>
+            <button class="btn-cancel-modal" onclick="closeModal()">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== تسجيل الدخول ===== -->
+<div class="admin-login-wrap" id="adminLogin">
+    <div class="login-card fade-in">
+        <img src="https://z-cdn-media.chatglm.cn/files/a7b40a38-8146-48c5-8f94-a3692f8583ff.jpg?auth_key=1876448080-3cd3dc770813465eb7f9e39e3778c752-0-cad207d403b7db63f9ff1400710b92e8" alt="Floya Store" class="login-logo">
+        <div class="login-title">لوحة التحكم</div>
+        <div class="login-sub">Floya Store - إدارة المتجر</div>
+        <form class="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label>اسم المستخدم</label>
+                <input type="text" id="loginUser" placeholder="أدخل اسم المستخدم" required>
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" id="loginPass" placeholder="أدخل كلمة المرور" required>
+            </div>
+            <button type="submit" class="btn-login">تسجيل الدخول</button>
+            <div class="login-error" id="loginError">اسم المستخدم أو كلمة المرور غير صحيحة</div>
+        </form>
+        <div style="text-align:center;margin-top:20px;">
+            <a href="index.html" style="font-size:12px;color:var(--text-muted);"><i class="fas fa-arrow-right" style="margin-left:4px;"></i> العودة للمتجر</a>
+        </div>
+    </div>
+</div>
+
+<!-- ===== الداشبورد ===== -->
+<div class="admin-dashboard" id="adminDashboard">
+    <header class="admin-header">
+        <div class="container">
+            <div class="admin-header-inner">
+                <div class="admin-header-title">
+                    <img src="https://z-cdn-media.chatglm.cn/files/a7b40a38-8146-48c5-8f94-a3692f8583ff.jpg?auth_key=1876448080-3cd3dc770813465eb7f9e39e3778c752-0-cad207d403b7db63f9ff1400710b92e8" alt="">
+                    لوحة التحكم
+                </div>
+                <div class="admin-header-actions">
+                    <a href="index.html" class="btn-sm btn-ghost"><i class="fas fa-store"></i> المتجر</a>
+                    <button class="btn-sm btn-logout" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> خروج</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="admin-tabs">
+            <button class="admin-tab active" onclick="switchAdminTab('stats',this)"><i class="fas fa-chart-bar" style="margin-left:6px;"></i>الإحصائيات</button>
+            <button class="admin-tab" onclick="switchAdminTab('products',this)"><i class="fas fa-boxes-stacked" style="margin-left:6px;"></i>المنتجات</button>
+            <button class="admin-tab" onclick="switchAdminTab('addProduct',this)"><i class="fas fa-plus-circle" style="margin-left:6px;"></i>إضافة منتج</button>
+            <button class="admin-tab" onclick="switchAdminTab('orders',this)"><i class="fas fa-shopping-bag" style="margin-left:6px;"></i>الطلبات</button>
+            <button class="admin-tab" onclick="switchAdminTab('settings',this)"><i class="fas fa-cog" style="margin-left:6px;"></i>الإعدادات</button>
+        </nav>
+
+        <div class="admin-content">
+            <section class="admin-section active" id="section-stats">
+                <div class="stats-grid" id="statsGrid"></div>
+            </section>
+
+            <section class="admin-section" id="section-products">
+                <div class="admin-products-list" id="adminProductsList"></div>
+                <div class="empty-state" id="emptyAdminProducts" style="display:none;"><i class="fas fa-box-open"></i><p>لا توجد منتجات بعد</p></div>
+            </section>
+
+            <section class="admin-section" id="section-addProduct">
+                <div class="admin-form-card fade-in">
+                    <div class="admin-form-title" id="formTitle"><i class="fas fa-plus-circle"></i> إضافة منتج جديد</div>
+                    <form onsubmit="handleProductSubmit(event)" id="productForm">
+                        <input type="hidden" id="editProductId" value="">
+                        <input type="hidden" id="prodImageData" value="">
+
+                        <div class="form-group">
+                            <label>صورة المنتج</label>
+                            <div class="image-upload-area" id="imageUploadArea">
+                                <input type="file" accept="image/*" id="prodImageFile" onchange="handleImageUpload(event)">
+                                <div id="uploadPlaceholder">
+                                    <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                                    <div class="upload-text">اضغطي هنا لرفع صورة المنتج</div>
+                                    <div class="upload-hint">JPG, PNG - الحد الأقصى 2MB</div>
+                                </div>
+                                <img id="uploadPreview" class="upload-preview" style="display:none;" alt="">
+                                <button type="button" class="remove-image" id="removeImageBtn" style="display:none;" onclick="removeUploadedImage(event)"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>اسم المنتج</label>
+                            <input type="text" id="prodName" placeholder="مثال: مزهرية خرسانية أنيقة" required>
+                        </div>
+                        <div class="form-group">
+                            <label>وصف المنتج</label>
+                            <textarea id="prodDesc" placeholder="اكتبي وصفا تفصيليا للمنتج..."></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>السعر العادي (د.ج)</label>
+                                <input type="number" id="prodPrice" placeholder="1500" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>سعر التخفيض (د.ج) - اختياري</label>
+                                <input type="number" id="prodPromo" placeholder="اتركيه فارغا إن لم يكن" min="0">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>التصنيف</label>
+                            <select id="prodCategory" required>
+                                <option value="">اختر التصنيف</option>
+                                <option value="جديد">الجديد</option>
+                                <option value="اطفال">اطفال</option>
+                                <option value="توزيعات">توزيعات</option>
+                                <option value="الهدايا">الهدايا</option>
+                                <option value="ديكور">ديكور</option>
+                            </select>
+                        </div>
+                        <div style="display:flex;align-items:center;flex-wrap:wrap;">
+                            <button type="submit" class="btn-submit-product" id="submitProductBtn">إضافة المنتج</button>
+                            <button type="button" class="btn-cancel-edit" id="cancelEditBtn" style="display:none;" onclick="cancelEdit()">إلغاء التعديل</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <section class="admin-section" id="section-orders">
+                <div class="orders-list" id="ordersList"></div>
+                <div class="empty-state" id="emptyOrders" style="display:none;"><i class="fas fa-inbox"></i><p>لا توجد طلبات جديدة بعد</p></div>
+            </section>
+
+            <!-- ===== Settings Section ===== -->
+            <section class="admin-section" id="section-settings">
+                <div class="settings-card fade-in">
+                    <!-- Change Password -->
+                    <div class="settings-section">
+                        <h4><i class="fas fa-lock"></i> تغيير كلمة المرور</h4>
+                        <form onsubmit="handleChangePassword(event)">
+                            <div class="form-group">
+                                <label>كلمة المرور الحالية</label>
+                                <input type="password" id="currentPassword" placeholder="أدخل كلمة المرور الحالية" required>
+                            </div>
+                            <div class="form-group">
+                                <label>كلمة المرور الجديدة</label>
+                                <input type="password" id="newPassword" placeholder="أدخل كلمة المرور الجديدة (6 أحرف على الأقل)" minlength="6" required oninput="checkPasswordStrength(this.value)">
+                                <div class="password-strength" id="passwordStrength"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>تأكيد كلمة المرور الجديدة</label>
+                                <input type="password" id="confirmPassword" placeholder="أعد إدخال كلمة المرور الجديدة" required>
+                                <div class="form-error" id="passwordMatchError" style="display:none;color:var(--danger);font-size:11px;margin-top:4px;">كلمتا المرور غير متطابقتين</div>
+                            </div>
+                            <button type="submit" class="btn-submit-product"><i class="fas fa-key" style="margin-left:8px;"></i> تحديث كلمة المرور</button>
+                        </form>
+                    </div>
+
+                    <!-- Admin Info -->
+                    <div class="settings-section" style="border-top:1px solid var(--border);padding-top:24px;">
+                        <h4><i class="fas fa-user-shield"></i> معلومات الحساب</h4>
+                        <div id="adminProfileInfo" style="font-size:13px;color:var(--text-light);">
+                            <p><strong>اسم المستخدم:</strong> <span id="profileUsername">-</span></p>
+                            <p style="margin-top:8px;"><strong>الدور:</strong> <span id="profileRole">-</span></p>
+                            <p style="margin-top:8px;"><strong>آخر تسجيل دخول:</strong> <span id="profileLastLogin">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+let deleteTargetId=null,adminToken=null,allProducts=[],allOrders=[],currentUser=null;
+
+function showToast(msg,type='info'){const c=document.getElementById('toast-container');if(!c)return;const t=document.createElement('div');t.className=`toast ${type}`;const icons={success:'fa-check-circle',error:'fa-times-circle',info:'fa-info-circle'};t.innerHTML=`<i class="fas ${icons[type]||icons.info}"></i> ${msg}`;c.appendChild(t);setTimeout(()=>t.remove(),3000)}
+function openDeleteModal(id){deleteTargetId=id;document.getElementById('deleteModal').classList.add('active')}
+function closeModal(){document.getElementById('deleteModal').classList.remove('active');deleteTargetId=null}
+document.getElementById('confirmDeleteBtn').addEventListener('click',()=>{if(deleteTargetId!==null){deleteProduct(deleteTargetId);closeModal()}});
+function generateId(){return Date.now()+Math.floor(Math.random()*1000)}
+function formatPrice(p){return Number(p).toLocaleString('ar-DZ')}
+
+// ===== Password Strength Checker =====
+function checkPasswordStrength(password){
+    const strengthEl=document.getElementById('passwordStrength');
+    if(!password){strengthEl.textContent='';return}
+
+    let strength=0;
+    if(password.length>=6)strength++;
+    if(password.length>=10)strength++;
+    if(/[a-z]/.test(password)&&/[A-Z]/.test(password))strength++;
+    if(/[0-9]/.test(password))strength++;
+    if(/[^a-zA-Z0-9]/.test(password))strength++;
+
+    if(strength<=2){
+        strengthEl.textContent='ضعيفة';
+        strengthEl.className='password-strength weak';
+    }else if(strength<=3){
+        strengthEl.textContent='متوسطة';
+        strengthEl.className='password-strength medium';
+    }else{
+        strengthEl.textContent='قوية';
+        strengthEl.className='password-strength strong';
+    }
+}
+
+// ===== رفع الصورة وتحويلها لـ base64 =====
+function handleImageUpload(e){
+    e.stopPropagation();
+    const file = e.target.files[0];
+    if(!file) return;
+
+    if(file.size > 2 * 1024 * 1024){
+        showToast('حجم الصورة كبير جداً، الحد الأقصى 2MB','error');
+        e.target.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(ev){
+        const base64 = ev.target.result;
+        document.getElementById('prodImageData').value = base64;
+
+        const preview = document.getElementById('uploadPreview');
+        preview.src = base64;
+        preview.style.display = 'block';
+
+        document.getElementById('uploadPlaceholder').style.display = 'none';
+        document.getElementById('removeImageBtn').style.display = 'flex';
+        document.getElementById('imageUploadArea').classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeUploadedImage(e){
+    e.stopPropagation();
+    e.preventDefault();
+
+    document.getElementById('prodImageData').value = '';
+    document.getElementById('prodImageFile').value = '';
+    document.getElementById('uploadPreview').style.display = 'none';
+    document.getElementById('uploadPreview').src = '';
+    document.getElementById('uploadPlaceholder').style.display = 'block';
+    document.getElementById('removeImageBtn').style.display = 'none';
+    document.getElementById('imageUploadArea').classList.remove('has-image');
+}
+
+function showExistingImage(imageSrc){
+    if(!imageSrc) return;
+    document.getElementById('prodImageData').value = imageSrc;
+    const preview = document.getElementById('uploadPreview');
+    preview.src = imageSrc;
+    preview.style.display = 'block';
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+    document.getElementById('removeImageBtn').style.display = 'flex';
+    document.getElementById('imageUploadArea').classList.add('has-image');
+}
+
+// ===== تسجيل الدخول =====
+async function handleLogin(e){
+    e.preventDefault();
+    const user=document.getElementById('loginUser').value.trim(),pass=document.getElementById('loginPass').value;
+    try{
+        const res=await api.login(user,pass);
+        adminToken=res.token;
+        currentUser=res.user;
+        sessionStorage.setItem('floya_admin_token',adminToken);
+        document.getElementById('adminLogin').style.display='none';
+        document.getElementById('adminDashboard').classList.add('active');
+        document.getElementById('loginError').classList.remove('show');
+        await loadAdminProfile();
+        await refreshAdminData();
+        showToast('تم تسجيل الدخول بنجاح','success');
+    }catch(err){
+        document.getElementById('loginError').classList.add('show');
+    }
+}
+function handleLogout(){
+    adminToken=null;
+    currentUser=null;
+    sessionStorage.removeItem('floya_admin_token');
+    document.getElementById('adminLogin').style.display='flex';
+    document.getElementById('adminDashboard').classList.remove('active');
+    document.getElementById('loginUser').value='';
+    document.getElementById('loginPass').value='';
+    showToast('تم تسجيل الخروج','info');
+}
+
+// ===== Load Admin Profile =====
+async function loadAdminProfile(){
+    try{
+        const profile=await api.getProfile();
+        document.getElementById('profileUsername').textContent=profile.username;
+        document.getElementById('profileRole').textContent=profile.role==='superadmin'?'مدير عام':'مدير';
+        document.getElementById('profileLastLogin').textContent=profile.last_login?new Date(profile.last_login).toLocaleString('ar-DZ'):'-';
+    }catch(err){
+        console.error('Error loading profile:',err);
+    }
+}
+
+// ===== Change Password =====
+async function handleChangePassword(e){
+    e.preventDefault();
+    const currentPass=document.getElementById('currentPassword').value;
+    const newPass=document.getElementById('newPassword').value;
+    const confirmPass=document.getElementById('confirmPassword').value;
+    const matchError=document.getElementById('passwordMatchError');
+
+    if(newPass!==confirmPass){
+        matchError.style.display='block';
+        return;
+    }
+    matchError.style.display='none';
+
+    if(newPass.length<6){
+        showToast('كلمة المرور يجب أن تكون 6 أحرف على الأقل','error');
+        return;
+    }
+
+    try{
+        await api.changePassword(currentPass,newPass);
+        showToast('تم تغيير كلمة المرور بنجاح','success');
+        document.getElementById('currentPassword').value='';
+        document.getElementById('newPassword').value='';
+        document.getElementById('confirmPassword').value='';
+        document.getElementById('passwordStrength').textContent='';
+    }catch(err){
+        showToast(err.message||'حدث خطأ أثناء تغيير كلمة المرور','error');
+    }
+}
+
+// ===== التبويبات =====
+function switchAdminTab(tabName,btn){
+    document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+    document.getElementById('section-'+tabName).classList.add('active');
+    if(tabName==='settings'){
+        loadAdminProfile();
+    }else{
+        refreshAdminData();
+    }
+}
+async function refreshAdminData(){
+    try{
+        const [products,orders]=await Promise.all([api.getProducts(),api.getOrders(adminToken)]);
+        allProducts=products;
+        allOrders=orders;
+        renderStats();
+        renderAdminProducts();
+        renderAdminOrders();
+    }catch(err){
+        console.error('Error refreshing data:',err);
+        showToast('حدث خطأ أثناء تحميل البيانات','error');
+    }
+}
+
+// ===== إحصائيات =====
+function renderStats(){
+    const promoCount=allProducts.filter(p=>p.promo_price&&p.promo_price>0).length;
+    const newOrders=allOrders.filter(o=>o.status==='جديد').length;
+    document.getElementById('statsGrid').innerHTML=`
+        <div class="stat-card"><div class="stat-icon" style="color:var(--primary);"><i class="fas fa-boxes-stacked"></i></div><div class="stat-value">${allProducts.length}</div><div class="stat-label">إجمالي المنتجات</div></div>
+        <div class="stat-card"><div class="stat-icon" style="color:var(--promo);"><i class="fas fa-tags"></i></div><div class="stat-value">${promoCount}</div><div class="stat-label">عروض التخفيض</div></div>
+        <div class="stat-card"><div class="stat-icon" style="color:var(--warning);"><i class="fas fa-shopping-bag"></i></div><div class="stat-value">${allOrders.length}</div><div class="stat-label">إجمالي الطلبات</div></div>
+        <div class="stat-card"><div class="stat-icon" style="color:var(--success);"><i class="fas fa-bell"></i></div><div class="stat-value">${newOrders}</div><div class="stat-label">طلبات جديدة</div></div>`;
+}
+
+// ===== المنتجات =====
+function renderAdminProducts(){
+    const list=document.getElementById('adminProductsList'),empty=document.getElementById('emptyAdminProducts');
+    if(!allProducts.length){list.innerHTML='';empty.style.display='block';return}
+    empty.style.display='none';
+    list.innerHTML=allProducts.map(p=>{
+        const hp=p.promo_price&&p.promo_price>0;
+        const metaPrice=hp?`<span class="meta-promo"><s>${formatPrice(p.price)}</s> ${formatPrice(p.promo_price)} د.ج</span>`:`<span>${formatPrice(p.price)} د.ج</span>`;
+        return `<div class="admin-product-item fade-in"><img class="admin-product-thumb" src="${p.image||'https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=400&h=400'}" alt="${p.name}" onerror="this.src='https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=400&h=400'"><div class="admin-product-info"><h4>${p.name}</h4><div class="admin-product-meta"><span>${p.category}</span>${metaPrice}</div></div><div class="admin-product-actions"><button class="btn-edit" onclick="editProduct('${p.id}')" title="تعديل"><i class="fas fa-pen"></i></button><button class="btn-delete" onclick="openDeleteModal('${p.id}')" title="حذف"><i class="fas fa-trash"></i></button></div></div>`;
+    }).join('');
+}
+
+// ===== إضافة/تعديل =====
+async function handleProductSubmit(e){
+    e.preventDefault();
+    const editId=document.getElementById('editProductId').value;
+    const name=document.getElementById('prodName').value.trim();
+    const desc=document.getElementById('prodDesc').value.trim();
+    const price=parseFloat(document.getElementById('prodPrice').value);
+    const promoVal=document.getElementById('prodPromo').value.trim();
+    const category=document.getElementById('prodCategory').value;
+    const imageData=document.getElementById('prodImageData').value;
+    if(!name||!price||!category){showToast('الرجاء ملء جميع الحقول المطلوبة','error');return}
+    const promoPrice=promoVal?parseFloat(promoVal):null;
+    if(promoPrice!==null&&promoPrice>=price){showToast('سعر التخفيض يجب أن يكون أقل من السعر العادي','error');return}
+
+    const productData={name,description:desc,price,promoPrice,category,image:imageData||'https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=400&h=400'};
+
+    try{
+        if(editId){
+            await api.updateProduct(editId,productData,adminToken);
+            showToast('تم تعديل المنتج بنجاح','success');
+            cancelEdit();
+        }else{
+            await api.createProduct(productData,adminToken);
+            showToast('تم إضافة المنتج بنجاح','success');
+            document.getElementById('productForm').reset();
+            removeUploadedImage(new Event('click'));
+        }
+        await refreshAdminData();
+    }catch(err){
+        showToast(err.message||'حدث خطأ أثناء حفظ المنتج','error');
+    }
+}
+
+function editProduct(id){
+    const p=allProducts.find(x=>x.id===id);if(!p)return;
+    const tabs=document.querySelectorAll('.admin-tab');tabs.forEach(t=>t.classList.remove('active'));tabs[2].classList.add('active');
+    document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+    document.getElementById('section-addProduct').classList.add('active');
+    document.getElementById('editProductId').value=p.id;
+    document.getElementById('prodName').value=p.name;
+    document.getElementById('prodDesc').value=p.description||'';
+    document.getElementById('prodPrice').value=p.price;
+    document.getElementById('prodPromo').value=p.promo_price||'';
+    document.getElementById('prodCategory').value=p.category;
+    if(p.image){
+        showExistingImage(p.image);
+    }else{
+        removeUploadedImage(new Event('click'));
+    }
+    document.getElementById('formTitle').innerHTML='<i class="fas fa-edit"></i> تعديل المنتج';
+    document.getElementById('submitProductBtn').textContent='حفظ التعديلات';
+    document.getElementById('cancelEditBtn').style.display='inline-block';
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function cancelEdit(){
+    document.getElementById('editProductId').value='';
+    document.getElementById('productForm').reset();
+    removeUploadedImage(new Event('click'));
+    document.getElementById('formTitle').innerHTML='<i class="fas fa-plus-circle"></i> إضافة منتج جديد';
+    document.getElementById('submitProductBtn').textContent='إضافة المنتج';
+    document.getElementById('cancelEditBtn').style.display='none';
+}
+
+async function deleteProduct(id){
+    try{
+        await api.deleteProduct(id,adminToken);
+        showToast('تم حذف المنتج','info');
+        await refreshAdminData();
+    }catch(err){
+        showToast(err.message||'حدث خطأ أثناء حذف المنتج','error');
+    }
+}
+
+// ===== الطلبات =====
+function renderAdminOrders(){
+    const list=document.getElementById('ordersList'),empty=document.getElementById('emptyOrders');
+    if(!allOrders.length){list.innerHTML='';empty.style.display='block';return}
+    empty.style.display='none';
+    list.innerHTML=allOrders.map(o=>{
+        const date=new Date(o.created_at);
+        const dateStr=date.toLocaleDateString('ar-DZ',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+        const sc={'جديد':'status-new','مؤكد':'status-confirmed','مكتمل':'status-completed','ملغي':'status-cancelled'}[o.status]||'status-new';
+        return `<div class="order-item ${sc} fade-in"><div class="order-header"><span class="order-id"><i class="fas fa-hashtag" style="margin-left:4px;"></i>طلب ${String(o.id).slice(0,8)}</span><span class="order-date">${dateStr}</span></div><div class="order-details"><div class="order-detail-item product-name"><span>المنتج: </span><strong>${o.product_name}</strong></div><div class="order-detail-item"><span>الاسم: </span><strong>${o.customer_name}</strong></div><div class="order-detail-item"><span>الولاية: </span><strong>${o.customer_state}</strong></div><div class="order-detail-item"><span>الهاتف: </span><strong dir="ltr" style="display:inline-block;">${o.customer_phone}</strong></div><div class="order-detail-item"><span>السعر: </span><strong>${formatPrice(o.product_price)} د.ج</strong></div><div class="order-detail-item"><span>الحالة: </span><select class="order-status-select" onchange="updateOrderStatus('${o.id}',this.value)"><option value="جديد" ${o.status==='جديد'?'selected':''}>جديد</option><option value="مؤكد" ${o.status==='مؤكد'?'selected':''}>مؤكد</option><option value="مكتمل" ${o.status==='مكتمل'?'selected':''}>مكتمل</option><option value="ملغي" ${o.status==='ملغي'?'selected':''}>ملغي</option></select></div></div></div>`;
+    }).join('');
+}
+
+async function updateOrderStatus(orderId,newStatus){
+    try{
+        await api.updateOrderStatus(orderId,newStatus,adminToken);
+        showToast(`تم تحديث حالة الطلب إلى "${newStatus}"`,'info');
+        await refreshAdminData();
+    }catch(err){
+        showToast(err.message||'حدث خطأ أثناء تحديث حالة الطلب','error');
+    }
+}
+
+// ===== فحص الجلسة =====
+async function initAdmin(){
+    const savedToken=sessionStorage.getItem('floya_admin_token');
+    if(savedToken){
+        adminToken=savedToken;
+        document.getElementById('adminLogin').style.display='none';
+        document.getElementById('adminDashboard').classList.add('active');
+        await loadAdminProfile();
+        await refreshAdminData();
+    }
+}
+initAdmin();
+</script>
+</body>
+</html>
